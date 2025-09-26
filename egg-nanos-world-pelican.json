@@ -1,0 +1,43 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PELICAN PANEL",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2025-09-26T00:00:00+00:00",
+    "name": "Nanos World",
+    "author": "admin@example.com",
+    "description": "Nanos World is a next-generation open-world multiplayer sandbox game built on Unreal Engine 5. This server supports both stable and bleeding-edge versions with extensive modding capabilities through packages and assets.",
+    "features": ["pid_limit"],
+    "docker_images": {
+        "Ubuntu 22.04": "ghcr.io/parkervcp/steamcmd:debian",
+        "Ubuntu 20.04": "ghcr.io/parkervcp/steamcmd:ubuntu"
+    },
+    "file_denylist": [],
+    "startup": "./NanosWorldServer.sh {{AUTO_DOWNLOAD}}",
+    "config": {
+        "files": "{}",
+        "startup": "{\"done\": \"[LOG] Server Started\"}",
+        "logs": "{\"custom\": false, \"location\": \"logs/latest.log\"}",
+        "stop": "stop"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/bash\n# Nanos World Server Installation Script\n# Server Files: /mnt/server\n\n## File: Pterodactyl Nanos World Egg - egg-nanos-world.json\n## Author: Pelican Panel Community\n## GitHub: https://github.com/pelican-eggs/games-steamcmd\n\n# Update package lists and install dependencies\napt -y update\n\n# Install appropriate dependencies based on architecture\nif [ \"$(dpkg --print-architecture)\" == \"amd64\" ]; then\n    # For 64-bit systems, install lib32gcc-s1 (replacement for lib32gcc1)\n    apt -y --no-install-recommends install curl lib32gcc-s1 ca-certificates wget\nelse\n    # For other architectures, install standard gcc libs\n    apt -y --no-install-recommends install curl gcc ca-certificates wget\nfi\n\n# Install SteamCMD\ncd /tmp\nmkdir -p /mnt/server/steamcmd\ncd /mnt/server/steamcmd\n\nif [ \"$(uname -m)\" == \"x86_64\" ]; then\n    echo \"Downloading SteamCMD for Linux x64...\"\n    curl -sSL -o steamcmd_linux.tar.gz https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz\nelse\n    echo \"Architecture not supported for SteamCMD\"\n    exit 1\nfi\n\ntar -xzvf steamcmd_linux.tar.gz\nrm steamcmd_linux.tar.gz\n\n# Create server directory\nmkdir -p /mnt/server\ncd /mnt/server\n\n## Install/Update Nanos World Server via SteamCMD\necho \"Downloading Nanos World Server files via SteamCMD...\"\n\n# Determine branch based on version selection (default to stable)\nBRANCH=\"\"\necho \"Installing stable version\"\n\n# Download server files using SteamCMD\n/mnt/server/steamcmd/steamcmd.sh +force_install_dir /mnt/server +login anonymous +app_update 1936830 validate +quit\n\n# Verify installation\nif [ ! -f \"/mnt/server/NanosWorldServer.sh\" ]; then\n    echo \"ERROR: Server installation failed - NanosWorldServer.sh not found\"\n    exit 1\nfi\n\n# Make server executable\nchmod +x /mnt/server/NanosWorldServer.sh\nif [ -f \"/mnt/server/Binaries/Linux/NanosWorldServer-Linux-Shipping\" ]; then\n    chmod +x /mnt/server/Binaries/Linux/NanosWorldServer-Linux-Shipping\nfi\n\n# Create necessary directories\nmkdir -p /mnt/server/logs\nmkdir -p /mnt/server/Packages\nmkdir -p /mnt/server/Assets\n\n# Clean up SteamCMD from server directory to save space\nrm -rf /mnt/server/steamcmd\n\necho \"Nanos World Server installation completed successfully!\"\necho \"Installation directory: /mnt/server\"\necho \"Executable: ./NanosWorldServer.sh\"",
+            "container": "ghcr.io/parkervcp/installers:debian",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Auto Download",
+            "description": "Enable automatic download of packages and assets for players when they connect to the server.",
+            "env_variable": "AUTO_DOWNLOAD",
+            "default_value": "--auto_download",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|in:--auto_download,",
+            "field_type": "text"
+        }
+    ]
+}
