@@ -1,0 +1,123 @@
+{
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2025-01-27T12:00:00+00:00",
+    "name": "Nanos World Bleeding Edge",
+    "author": "admin@example.com",
+    "description": "Nanos World is a next-generation multiplayer sandbox game. This egg installs the bleeding-edge branch.",
+    "features": null,
+    "docker_images": {
+        "ghcr.io/parkervcp/yolks:ubuntu": "ghcr.io/parkervcp/yolks:ubuntu"
+    },
+    "file_denylist": [],
+    "startup": "./NanosWorldServer.sh --port {{SERVER_PORT}} --query_port {{QUERY_PORT}} --max_players {{MAX_PLAYERS}} --name \"{{SERVER_NAME}}\" --description \"{{SERVER_DESC}}\" --password \"{{SERVER_PASSWORD}}\" --map \"{{MAP}}\" --game_mode \"{{GAME_MODE}}\" --log_level {{LOG_LEVEL}}",
+    "config": {
+        "files": "{}",
+        "startup": {
+            "done": "Server Started"
+        },
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/bash\n# Nanos World Bleeding Edge Installation Script\n\napt update\napt -y install curl lib32gcc-s1 ca-certificates\n\n# Install SteamCMD\ncd /tmp\ncurl -sSL -o steamcmd_linux.tar.gz https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz\nmkdir -p /mnt/server/steamcmd\ntar -xzvf steamcmd_linux.tar.gz -C /mnt/server/steamcmd\n\n# Install Nanos World Server Bleeding Edge\ncd /mnt/server/steamcmd\n./steamcmd.sh +force_install_dir /mnt/server +login anonymous +app_update 1936830 -beta bleeding-edge validate +quit\n\n# Ensure permissions\nchmod +x /mnt/server/NanosWorldServer.sh\nchmod +x /mnt/server/NanosWorldServer\n\n# Create directories\nmkdir -p /mnt/server/Packages\nmkdir -p /mnt/server/Assets\nmkdir -p /mnt/server/Logs\n\n# Create default Config.toml\ncat <<EOF > /mnt/server/Config.toml\n[network]\nport = 7777\nquery_port = 7778\nannounce = true\n\n[general]\nname = \"Nanos World Server\"\ndescription = \"Bleeding Edge Server\"\nmax_players = 32\npassword = \"\"\n\n[game]\nmap = \"default-testing-map\"\ngame_mode = \"\"\npackages = []\nassets = []\n\n[debug]\nlog_level = 1\nEOF\n\necho \"Installation complete!\"",
+            "container": "ghcr.io/parkervcp/installers:debian",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Server Name",
+            "description": "The name of your server",
+            "env_variable": "SERVER_NAME",
+            "default_value": "Nanos World Server",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:64",
+            "field_type": "text"
+        },
+        {
+            "name": "Server Description",
+            "description": "Server description",
+            "env_variable": "SERVER_DESC",
+            "default_value": "Bleeding Edge Server",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:127",
+            "field_type": "text"
+        },
+        {
+            "name": "Server Port",
+            "description": "Main game port",
+            "env_variable": "SERVER_PORT",
+            "default_value": "7777",
+            "user_viewable": true,
+            "user_editable": false,
+            "rules": "required|integer|between:1,65535",
+            "field_type": "text"
+        },
+        {
+            "name": "Query Port",
+            "description": "Query port for server browser",
+            "env_variable": "QUERY_PORT",
+            "default_value": "7778",
+            "user_viewable": true,
+            "user_editable": false,
+            "rules": "required|integer|between:1,65535",
+            "field_type": "text"
+        },
+        {
+            "name": "Max Players",
+            "description": "Maximum players allowed",
+            "env_variable": "MAX_PLAYERS",
+            "default_value": "32",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|between:1,128",
+            "field_type": "text"
+        },
+        {
+            "name": "Map",
+            "description": "Starting map",
+            "env_variable": "MAP",
+            "default_value": "default-testing-map",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Game Mode",
+            "description": "Game mode to load",
+            "env_variable": "GAME_MODE",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Server Password",
+            "description": "Password to join (leave empty for public)",
+            "env_variable": "SERVER_PASSWORD",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Log Level",
+            "description": "Logging verbosity (1-3)",
+            "env_variable": "LOG_LEVEL",
+            "default_value": "1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|between:1,3",
+            "field_type": "text"
+        }
+    ]
+}
